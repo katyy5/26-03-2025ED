@@ -1,113 +1,83 @@
 package clases;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Clase que gestiona el sistema de reservas deportivas.
- * Permite a los usuarios reservar, cancelar reservas, activar o desactivar la iluminación de las pistas,
- * y verificar la disponibilidad de las mismas.
- * 
  * @author Katherin Cabrera Esquijarosa
- * @version 1.0
+ * @version 1.1
  */
 public class SistemaReservasDeportivas {
 
     private List<Reserva> reservas;
-    private boolean[] iluminacion;
-    private static final int MAX_PISTAS = 10; // Asumimos un máximo de 10 pistas
+    private GestorIluminacion gestorIluminacion;
 
     /**
-     * Constructor para inicializar el sistema de reservas deportivas.
-     * Inicializa la lista de reservas y el estado de la iluminación de las pistas.
+     * Constructor que inicializa el sistema de reservas y el gestor de iluminación.
      */
     public SistemaReservasDeportivas() {
         reservas = new ArrayList<>();
-        iluminacion = new boolean[MAX_PISTAS];
+        gestorIluminacion = new GestorIluminacion();
     }
 
     /**
-     * Realiza una reserva para una pista en una fecha y duración determinadas.
-     *
-     * @param idPista El identificador de la pista que se quiere reservar.
-     * @param fecha La fecha en la que se desea realizar la reserva.
-     * @param duracion La duración de la reserva en minutos.
-     * @return true si la reserva se realizó con éxito, false si la pista ya está reservada o el idPista es inválido.
+     * Realiza una reserva de pista si la fecha está disponible.
+     * 
+     * @param reserva La reserva que se desea realizar.
+     * @return true si la reserva fue exitosa, false si la fecha no está disponible.
      */
-    public boolean reservarPista(int idPista, String fecha, int duracion) {
-        if (idPista < 0 || idPista >= MAX_PISTAS) {
-            return false; // ID de pista inválido
+    public boolean reservarPista(Reserva reserva) {
+        if (esFechaDisponible(reserva.getIdPista(), reserva.getFechaHora())) {
+            reservas.add(reserva);
+            return true;
         }
+        return false;
+    }
+
+    /**
+     * Verifica si una pista está disponible en una fecha específica.
+     * 
+     * @param idPista   El identificador de la pista.
+     * @param fechaHora La fecha y hora de la reserva.
+     * @return true si la pista está disponible, false si ya está reservada.
+     */
+    private boolean esFechaDisponible(int idPista, LocalDateTime fechaHora) {
         for (Reserva r : reservas) {
-            if (r.getIdPista() == idPista && r.getFecha().equals(fecha)) {
-                return false; // La pista ya está reservada en esa fecha
+            if (r.getIdPista() == idPista && r.getFechaHora().equals(fechaHora)) {
+                return false;
             }
         }
-        reservas.add(new Reserva(idPista, fecha, duracion));
         return true;
     }
 
     /**
-     * Cancela una reserva existente en el sistema.
-     *
-     * @param idReserva El identificador de la reserva a cancelar.
-     * @return true si la reserva fue cancelada con éxito, false si no se encontró la reserva con ese id.
+     * Enciende las luces de una pista deportiva.
+     * 
+     * @param idPista El identificador de la pista.
+     * @return true si la iluminación se activó correctamente, false en caso contrario.
      */
-    public boolean cancelarReserva(int idReserva) {
-        for (int i = 0; i < reservas.size(); i++) {
-            if (reservas.get(i).getIdPista() == idReserva) {
-                reservas.remove(i);
-                return true;
-            }
-        }
-        return false; // No se encontró la reserva
+    public boolean encenderLuces(int idPista) {
+        return gestorIluminacion.encenderLuces(idPista);
     }
 
     /**
-     * Activa la iluminación de una pista específica.
-     *
-     * @param idPista El identificador de la pista cuya iluminación se activará.
-     * @return true si la iluminación se activó correctamente, false si el idPista es inválido.
+     * Apaga las luces de una pista deportiva.
+     * 
+     * @param idPista El identificador de la pista.
+     * @return true si la iluminación se apagó correctamente, false en caso contrario.
      */
-    public boolean activarIluminacion(int idPista) {
-        if (idPista < 0 || idPista >= MAX_PISTAS) {
-            return false; // ID de pista inválido
-        }
-        iluminacion[idPista] = true;
-        return true;
+    public boolean apagarLuces(int idPista) {
+        return gestorIluminacion.apagarLuces(idPista);
     }
 
     /**
-     * Desactiva la iluminación de una pista específica.
-     *
-     * @param idPista El identificador de la pista cuya iluminación se desactivará.
-     * @return true si la iluminación se desactivó correctamente, false si el idPista es inválido.
+     * Verifica si las luces de una pista están encendidas.
+     * 
+     * @param idPista El identificador de la pista.
+     * @return true si las luces están encendidas, false en caso contrario.
      */
-    public boolean desactivarIluminacion(int idPista) {
-        if (idPista < 0 || idPista >= MAX_PISTAS) {
-            return false; // ID de pista inválido
-        }
-        iluminacion[idPista] = false;
-        return true;
-    }
-
-    /**
-     * Verifica la disponibilidad de una pista en una fecha y hora determinadas.
-     *
-     * @param idPista El identificador de la pista a verificar.
-     * @param fecha La fecha en la que se desea verificar la disponibilidad de la pista.
-     * @param hora La hora en la que se desea verificar la disponibilidad de la pista.
-     * @return true si la pista está disponible, false si ya está reservada en esa fecha.
-     */
-    public boolean verificarDisponibilidad(int idPista, String fecha, String hora) {
-        if (idPista < 0 || idPista >= MAX_PISTAS) {
-            return false; // ID de pista inválido
-        }
-        for (Reserva r : reservas) {
-            if (r.getIdPista() == idPista && r.getFecha().equals(fecha)) {
-                return false; // La pista no está disponible en esa fecha
-            }
-        }
-        return true; // La pista está disponible
+    public boolean lucesEncendidas(int idPista) {
+        return gestorIluminacion.lucesEncendidas(idPista);
     }
 }
